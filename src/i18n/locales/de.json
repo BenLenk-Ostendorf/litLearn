@@ -4,7 +4,7 @@
     "inbox": "Inbox",
     "reading": "Lesen",
     "spacedRepetition": "Spaced Repetition",
-    "search": "Suche",
+    "search": "Bibliothek",
     "settings": "Einstellungen"
   },
   "dashboard": {
@@ -162,7 +162,7 @@
     }
   },
   "search": {
-    "title": "Suche",
+    "title": "Bibliothek",
     "placeholder": "Suche Paper nach Titel, DOI, Themen oder Konzepten...",
     "noResults": "Keine Paper gefunden",
     "tryDifferent": "Versuche einen anderen Suchbegriff",
