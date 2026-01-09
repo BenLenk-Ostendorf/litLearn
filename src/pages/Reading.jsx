@@ -75,11 +75,11 @@ export default function Reading() {
   const createEmptyExcerpt = () => ({
     main_claims: { user_input: '', ai_suggestion: '', final: '' },
     topics: { user_input: [], ai_suggestion: [], final: [] },
+    study_type: '',
     citability: 5,
     relevant_projects: [],
     expiry_years: 5,
     methodology_sample: '',
-    key_concepts: { user_input: [], ai_suggestion: [], final: [] },
     critical_notes: { user_input: '', ai_suggestion: '', final: '' },
     completed_date: null,
     time_spent_minutes: 0

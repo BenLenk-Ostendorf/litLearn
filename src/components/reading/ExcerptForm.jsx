@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Sparkles, Check, Loader2 } from 'lucide-react'
 import TagInput from './TagInput'
 import AiSuggestion from './AiSuggestion'
@@ -12,6 +12,18 @@ const CITABILITY_LABELS = {
   9: 'Engel', 10: 'Engel'
 }
 
+const STUDY_TYPES = [
+  'Meta-Analyse',
+  'RCT',
+  'Quasi-Experimentell',
+  'Beobachtungsstudie',
+  'Qualitativ',
+  'Mixed Methods',
+  'Review',
+  'Theoretisch',
+  'Andere'
+]
+
 export default function ExcerptForm({ excerpt, onChange, pdfText, paper, settings, onComplete, saving }) {
   const [showOptional, setShowOptional] = useState(false)
   const { requestSuggestions, loading: aiLoading, error: aiError } = useAi(settings)
@@ -19,9 +31,44 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
   const [pendingSuggestions, setPendingSuggestions] = useState({
     main_claims: false,
     topics: false,
-    key_concepts: false,
     critical_notes: false
   })
+
+  // Auto-save to localStorage on every change
+  useEffect(() => {
+    if (!paper?.id || !excerpt) return
+    
+    const autoSaveKey = `litlearn_autosave_${paper.id}`
+    const autoSaveData = {
+      excerpt,
+      timestamp: Date.now()
+    }
+    
+    try {
+      localStorage.setItem(autoSaveKey, JSON.stringify(autoSaveData))
+    } catch (err) {
+      console.error('Auto-save failed:', err)
+    }
+  }, [excerpt, paper?.id])
+
+  // Load auto-saved data on mount
+  useEffect(() => {
+    if (!paper?.id) return
+    
+    const autoSaveKey = `litlearn_autosave_${paper.id}`
+    try {
+      const saved = localStorage.getItem(autoSaveKey)
+      if (saved) {
+        const { excerpt: savedExcerpt, timestamp } = JSON.parse(saved)
+        // Only restore if saved within last 24 hours
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          onChange(savedExcerpt)
+        }
+      }
+    } catch (err) {
+      console.error('Auto-save restore failed:', err)
+    }
+  }, [paper?.id])
 
   const handleFieldChange = (field, subfield, value) => {
     onChange({
@@ -79,8 +126,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
 
   const canRequestAi = (field) => {
     if (field === 'main_claims') return excerpt.main_claims.user_input.length >= 50
-    if (field === 'topics') return excerpt.topics.user_input.length >= 2
-    if (field === 'key_concepts') return excerpt.key_concepts.user_input.length >= 1
+    if (field === 'topics') return true // No minimum requirement for tags
     if (field === 'critical_notes') return excerpt.critical_notes.user_input.length >= 20
     return false
   }
@@ -138,10 +184,29 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         )}
       </div>
 
-      {/* Topics */}
+      {/* Citability */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Themen / Tags <span className="text-error">*</span>
+          Zitierbarkeit: {excerpt.citability} ({CITABILITY_LABELS[excerpt.citability]})
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          value={excerpt.citability}
+          onChange={(e) => handleSimpleChange('citability', parseInt(e.target.value))}
+          className="w-full"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>1 - Müll</span>
+          <span>10 - Engel</span>
+        </div>
+      </div>
+
+      {/* Topics & Key Concepts Combined */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Themen & Konzepte <span className="text-error">*</span>
         </label>
         <TagInput
           tags={excerpt.topics.user_input}
@@ -151,7 +216,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
               handleFieldChange('topics', 'final', tags)
             }
           }}
-          placeholder="Thema eingeben und Enter drücken..."
+          placeholder="Thema oder Konzept eingeben und Enter drücken..."
         />
         <div className="flex justify-end mt-2">
           <button
@@ -199,23 +264,21 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         )}
       </div>
 
-      {/* Citability */}
+      {/* Study Type */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Zitierbarkeit: {excerpt.citability} ({CITABILITY_LABELS[excerpt.citability]})
+          Studientyp
         </label>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={excerpt.citability}
-          onChange={(e) => handleSimpleChange('citability', parseInt(e.target.value))}
-          className="w-full"
-        />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>1 - Müll</span>
-          <span>10 - Engel</span>
-        </div>
+        <select
+          value={excerpt.study_type || ''}
+          onChange={(e) => handleSimpleChange('study_type', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+        >
+          <option value="">Bitte wählen...</option>
+          {STUDY_TYPES.map(type => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
       </div>
 
       {/* Projects */}
@@ -291,66 +354,17 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
 
       {showOptional && (
         <div className="space-y-6 pt-4 border-t border-gray-200">
-          {/* Methodology */}
+          {/* Sample Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Methodik & Sample
+              Samplebeschreibung
             </label>
             <textarea
               value={excerpt.methodology_sample}
               onChange={(e) => handleSimpleChange('methodology_sample', e.target.value)}
-              placeholder="Beschreibe die Methodik und das Sample..."
+              placeholder="Beschreibe das Sample und die Methodik..."
               className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
-          </div>
-
-          {/* Key Concepts */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wichtige Konzepte
-            </label>
-            <TagInput
-              tags={excerpt.key_concepts.user_input}
-              onChange={(tags) => {
-                handleFieldChange('key_concepts', 'user_input', tags)
-                handleFieldChange('key_concepts', 'final', tags)
-              }}
-              placeholder="Konzept eingeben..."
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => requestAiSuggestion('key_concepts')}
-                disabled={!canRequestAi('key_concepts') || pendingSuggestions.key_concepts || !pdfText}
-                className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-              >
-                {pendingSuggestions.key_concepts ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4" />
-                )}
-                KI-Vorschläge
-              </button>
-            </div>
-            
-            {excerpt.key_concepts.ai_suggestion.length > 0 && (
-              <div className="mt-2 p-3 bg-ai-suggestion rounded-lg border border-ai-border">
-                <div className="flex flex-wrap gap-1">
-                  {excerpt.key_concepts.ai_suggestion.map(concept => (
-                    <button
-                      key={concept}
-                      onClick={() => {
-                        if (!excerpt.key_concepts.final.includes(concept)) {
-                          handleFieldChange('key_concepts', 'final', [...excerpt.key_concepts.final, concept])
-                        }
-                      }}
-                      className="px-2 py-1 bg-white rounded text-sm hover:bg-purple-100 transition-colors"
-                    >
-                      + {concept}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Critical Notes */}
@@ -359,10 +373,13 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
               Kritische Anmerkungen
             </label>
             <textarea
-              value={excerpt.critical_notes.user_input}
+              value={excerpt.critical_notes?.user_input || ''}
               onChange={(e) => {
-                handleFieldChange('critical_notes', 'user_input', e.target.value)
-                handleFieldChange('critical_notes', 'final', e.target.value)
+                const value = e.target.value
+                handleFieldChange('critical_notes', 'user_input', value)
+                if (!excerpt.critical_notes.final) {
+                  handleFieldChange('critical_notes', 'final', value)
+                }
               }}
               placeholder="Deine kritischen Gedanken zum Paper..."
               className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary"

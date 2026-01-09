@@ -37,3 +37,33 @@ body {
 .resize-handle:hover {
   background: #3B82F6;
 }
+
+/* PDF.js text layer for text selection */
+.textLayer {
+  position: absolute;
+  text-align: initial;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.2;
+  line-height: 1.0;
+}
+
+.textLayer span,
+.textLayer br {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.textLayer span::selection {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.textLayer br::selection {
+  background: rgba(59, 130, 246, 0.3);
+}

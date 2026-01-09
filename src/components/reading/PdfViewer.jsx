@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react'
+import { ZoomIn, ZoomOut, Maximize2, Minimize2, Hand, MousePointer } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
+import * as pdfjsViewer from 'pdfjs-dist/web/pdf_viewer'
+import 'pdfjs-dist/web/pdf_viewer.css'
 import { loadPdf } from '../../utils/storage'
 
 // Use local worker file instead of CDN
@@ -10,16 +12,25 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString()
 
 export default function PdfViewer({ file, filePath, directoryHandle, onTextExtracted }) {
-  const canvasRef = useRef(null)
   const containerRef = useRef(null)
+  const scrollContainerRef = useRef(null)
+  const canvasRefs = useRef([])
+  const textLayerRefs = useRef([])
   
   const [pdf, setPdf] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [scale, setScale] = useState(1.8)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [renderedPages, setRenderedPages] = useState([])
+  const [hasSelectableText, setHasSelectableText] = useState(null)
+  
+  // Pan/drag state
+  const [isPanning, setIsPanning] = useState(false)
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 })
+  const [scrollPos, setScrollPos] = useState({ x: 0, y: 0 })
+  const [selectionMode, setSelectionMode] = useState(false)
 
   // Load PDF
   useEffect(() => {
@@ -42,7 +53,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
         const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise
         setPdf(pdfDoc)
         setTotalPages(pdfDoc.numPages)
-        setCurrentPage(1)
+        setHasSelectableText(null)
         
         // Extract text for AI
         extractText(pdfDoc)
@@ -94,45 +105,154 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
     }
   }
 
-  // Render current page
+  // Render all pages
   useEffect(() => {
-    if (!pdf || !canvasRef.current) return
+    if (!pdf) return
     
-    const renderPage = async () => {
-      const page = await pdf.getPage(currentPage)
-      const viewport = page.getViewport({ scale })
+    const renderAllPages = async () => {
+      const pages = []
       
-      const canvas = canvasRef.current
-      const context = canvas.getContext('2d')
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        const page = await pdf.getPage(pageNum)
+        const viewport = page.getViewport({ scale })
+        pages.push({ pageNum, viewport, page })
+      }
       
-      // Use devicePixelRatio for sharper rendering
-      const outputScale = window.devicePixelRatio || 1
-      
-      canvas.width = Math.floor(viewport.width * outputScale)
-      canvas.height = Math.floor(viewport.height * outputScale)
-      
-      // Set CSS size to match viewport (prevents browser scaling)
-      canvas.style.width = Math.floor(viewport.width) + 'px'
-      canvas.style.height = Math.floor(viewport.height) + 'px'
-      
-      const transform = outputScale !== 1 
-        ? [outputScale, 0, 0, outputScale, 0, 0] 
-        : null
-      
-      await page.render({
-        canvasContext: context,
-        viewport,
-        transform
-      }).promise
+      setRenderedPages(pages)
     }
     
-    renderPage()
-  }, [pdf, currentPage, scale])
+    renderAllPages()
+  }, [pdf, totalPages, scale])
+  
+  // Render each page to its canvas with text layer
+  useEffect(() => {
+    if (renderedPages.length === 0) return
+    
+    let cancelled = false
+    
+    const renderPages = async () => {
+      for (let index = 0; index < renderedPages.length; index++) {
+        if (cancelled) break
+        
+        const { pageNum, viewport, page } = renderedPages[index]
+        
+        try {
+          const canvas = canvasRefs.current[index]
+          if (!canvas) continue
+          
+          const context = canvas.getContext('2d')
+          const outputScale = window.devicePixelRatio || 1
+          
+          canvas.width = Math.floor(viewport.width * outputScale)
+          canvas.height = Math.floor(viewport.height * outputScale)
+          canvas.style.width = Math.floor(viewport.width) + 'px'
+          canvas.style.height = Math.floor(viewport.height) + 'px'
+          
+          const transform = outputScale !== 1 
+            ? [outputScale, 0, 0, outputScale, 0, 0] 
+            : null
+          
+          await page.render({
+            canvasContext: context,
+            viewport,
+            transform
+          }).promise
+
+          // Render text layer for selection
+          const textLayerDiv = textLayerRefs.current[index]
+          if (!textLayerDiv) continue
+          
+          const textContent = await page.getTextContent()
+          if (pageNum === 1 && hasSelectableText === null) {
+            const hasText = Boolean(textContent?.items?.some(i => (i?.str || '').trim().length > 0))
+            setHasSelectableText(hasText)
+          }
+          
+          textLayerDiv.innerHTML = ''
+          textLayerDiv.style.width = canvas.style.width
+          textLayerDiv.style.height = canvas.style.height
+          
+          if (pdfjsViewer?.TextLayer) {
+            const textLayer = new pdfjsViewer.TextLayer({
+              textContentSource: textContent,
+              container: textLayerDiv,
+              viewport
+            })
+            const maybePromise = textLayer.render()
+            if (maybePromise?.promise) {
+              await maybePromise.promise
+            } else {
+              await maybePromise
+            }
+          } else if (pdfjsViewer?.renderTextLayer) {
+            const taskOrPromise = pdfjsViewer.renderTextLayer({
+              textContentSource: textContent,
+              container: textLayerDiv,
+              viewport
+            })
+            
+            if (taskOrPromise?.promise) {
+              await taskOrPromise.promise
+            } else {
+              await taskOrPromise
+            }
+          } else {
+            console.warn('PDF.js text layer renderer not available in this build.')
+          }
+        } catch (err) {
+          console.error('Text layer render error:', err)
+        }
+      }
+    }
+    
+    renderPages()
+    
+    return () => {
+      cancelled = true
+    }
+  }, [renderedPages, hasSelectableText])
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.3, 4))
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.3, 0.5))
-  const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1))
-  const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages))
+  
+  // Pan/drag handlers (default mode unless in selection mode)
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return // Only left click
+    if (selectionMode) return // Don't pan in selection mode
+    
+    setIsPanning(true)
+    setStartPos({ x: e.clientX, y: e.clientY })
+    setScrollPos({
+      x: scrollContainerRef.current.scrollLeft,
+      y: scrollContainerRef.current.scrollTop
+    })
+    e.preventDefault()
+  }
+  
+  const handleMouseMove = (e) => {
+    if (!isPanning) return
+    
+    const dx = e.clientX - startPos.x
+    const dy = e.clientY - startPos.y
+    
+    scrollContainerRef.current.scrollLeft = scrollPos.x - dx
+    scrollContainerRef.current.scrollTop = scrollPos.y - dy
+  }
+  
+  const handleMouseUp = () => {
+    setIsPanning(false)
+  }
+  
+  useEffect(() => {
+    if (isPanning) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isPanning, startPos, scrollPos])
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return
@@ -193,22 +313,24 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
         
         <div className="flex items-center gap-2">
           <button
-            onClick={handlePrevPage}
-            disabled={currentPage <= 1}
-            className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50"
+            onClick={() => setSelectionMode(!selectionMode)}
+            className={`p-1.5 rounded transition-colors ${
+              selectionMode 
+                ? 'bg-primary text-white' 
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
+            title={selectionMode ? 'Text-Auswahl aktiv' : 'Hand-Werkzeug aktiv'}
           >
-            <ChevronLeft className="w-4 h-4" />
+            {selectionMode ? <MousePointer className="w-4 h-4" /> : <Hand className="w-4 h-4" />}
           </button>
           <span className="text-sm text-gray-600">
-            {currentPage} / {totalPages}
+            {totalPages} Seiten
           </span>
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage >= totalPages}
-            className="p-1.5 hover:bg-gray-100 rounded disabled:opacity-50"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {hasSelectableText === false && (
+            <span className="text-sm text-gray-500">
+              (kein Text im PDF)
+            </span>
+          )}
         </div>
         
         <button
@@ -220,9 +342,28 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
         </button>
       </div>
       
-      {/* Canvas */}
-      <div className="flex-1 overflow-auto p-4 flex justify-center">
-        <canvas ref={canvasRef} className="shadow-lg" />
+      {/* Scrollable canvas container */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-auto p-4 bg-gray-100"
+        style={{ cursor: isPanning ? 'grabbing' : (selectionMode ? 'text' : 'grab') }}
+        onMouseDown={handleMouseDown}
+      >
+        <div className="flex flex-col items-center gap-4">
+          {renderedPages.map(({ pageNum }, index) => (
+            <div key={pageNum} className="relative shadow-lg">
+              <canvas
+                ref={el => canvasRefs.current[index] = el}
+                className="bg-white"
+              />
+              <div 
+                className="textLayer absolute top-0 left-0 overflow-hidden leading-none"
+                ref={el => textLayerRefs.current[index] = el}
+                style={{ pointerEvents: selectionMode ? 'auto' : 'none' }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
