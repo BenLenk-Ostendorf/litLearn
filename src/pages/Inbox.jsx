@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../context/DataContext'
-import { Upload, FileText, Check, AlertCircle, X, Plus } from 'lucide-react'
+import { Upload, FileText, Check, AlertCircle, X, Plus, GripVertical } from 'lucide-react'
 import Papa from 'papaparse'
 import { v4 as uuidv4 } from 'uuid'
 import { format, parse, isValid } from 'date-fns'
@@ -18,6 +18,8 @@ export default function Inbox() {
   const [manualTitle, setManualTitle] = useState('')
   const [manualError, setManualError] = useState('')
   const [adding, setAdding] = useState(false)
+  
+  const [draggedIndex, setDraggedIndex] = useState(null)
 
   const existingDois = new Set(papers.map(p => p.doi.toLowerCase()))
 
@@ -80,7 +82,9 @@ export default function Inbox() {
     
     setImporting(true)
     
-    const newPapers = preview.map(row => ({
+    const maxOrder = Math.max(0, ...papers.filter(p => p.status === 'inbox').map(p => p.inbox_order || 0))
+    
+    const newPapers = preview.map((row, index) => ({
       id: uuidv4(),
       doi: row.doi,
       title: row.title,
@@ -88,7 +92,8 @@ export default function Inbox() {
       status: 'inbox',
       pdf_path: null,
       excerpt: null,
-      spaced_repetition: null
+      spaced_repetition: null,
+      inbox_order: maxOrder + index + 1
     }))
 
     await updatePapers([...papers, ...newPapers])
@@ -120,6 +125,8 @@ export default function Inbox() {
     
     setAdding(true)
     
+    const maxOrder = Math.max(0, ...papers.filter(p => p.status === 'inbox').map(p => p.inbox_order || 0))
+    
     const newPaper = {
       id: uuidv4(),
       doi: manualDoi.trim(),
@@ -128,7 +135,8 @@ export default function Inbox() {
       status: 'inbox',
       pdf_path: null,
       excerpt: null,
-      spaced_repetition: null
+      spaced_repetition: null,
+      inbox_order: maxOrder + 1
     }
     
     await updatePapers([...papers, newPaper])
@@ -138,7 +146,40 @@ export default function Inbox() {
     setAdding(false)
   }, [manualDoi, manualTitle, papers, updatePapers, existingDois])
 
-  const inboxPapers = papers.filter(p => p.status === 'inbox')
+  const inboxPapers = useMemo(() => {
+    return papers
+      .filter(p => p.status === 'inbox')
+      .sort((a, b) => (a.inbox_order || 0) - (b.inbox_order || 0))
+  }, [papers])
+  
+  const handleDragStart = (index) => {
+    setDraggedIndex(index)
+  }
+  
+  const handleDragOver = (e) => {
+    e.preventDefault()
+  }
+  
+  const handleDrop = async (dropIndex) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      return
+    }
+    
+    const reordered = [...inboxPapers]
+    const [draggedPaper] = reordered.splice(draggedIndex, 1)
+    reordered.splice(dropIndex, 0, draggedPaper)
+    
+    // Update inbox_order for all inbox papers
+    const updatedPapers = papers.map(p => {
+      if (p.status !== 'inbox') return p
+      const newIndex = reordered.findIndex(ip => ip.id === p.id)
+      return newIndex >= 0 ? { ...p, inbox_order: newIndex } : p
+    })
+    
+    await updatePapers(updatedPapers)
+    setDraggedIndex(null)
+  }
 
   return (
     <div className="space-y-6">
@@ -273,15 +314,28 @@ export default function Inbox() {
           </h3>
           
           <div className="space-y-2">
-            {inboxPapers.map(paper => (
-              <div key={paper.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            {inboxPapers.map((paper, index) => (
+              <div 
+                key={paper.id} 
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(index)}
+                className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-move hover:bg-gray-100 transition-colors ${
+                  draggedIndex === index ? 'opacity-50' : ''
+                }`}
+              >
+                <GripVertical className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate">{paper.title}</p>
                   <p className="text-sm text-gray-500">{paper.doi}</p>
                 </div>
                 <button
-                  onClick={() => navigate(`/reading/${paper.id}`)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(`/reading/${paper.id}`)
+                  }}
                   className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Lesen
