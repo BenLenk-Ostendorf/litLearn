@@ -19,7 +19,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
   
   const [pdf, setPdf] = useState(null)
   const [totalPages, setTotalPages] = useState(0)
-  const [scale, setScale] = useState(1.8)
+  const [scale, setScale] = useState(1.0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -212,8 +212,9 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
     }
   }, [renderedPages, hasSelectableText])
 
-  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.3, 4))
-  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.3, 0.5))
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.1, 2.0))
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.1, 1.0))
+  const handleZoomChange = (e) => setScale(parseFloat(e.target.value))
   
   // Pan/drag handlers (default mode unless in selection mode)
   const handleMouseDown = (e) => {
@@ -291,14 +292,25 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
     <div ref={containerRef} className="h-full flex flex-col bg-gray-100">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleZoomOut}
             className="p-1.5 hover:bg-gray-100 rounded"
             title="Verkleinern"
+            disabled={scale <= 1.0}
           >
             <ZoomOut className="w-4 h-4" />
           </button>
+          <input
+            type="range"
+            min="1.0"
+            max="2.0"
+            step="0.1"
+            value={scale}
+            onChange={handleZoomChange}
+            className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            title="Zoom: {Math.round(scale * 100)}%"
+          />
           <span className="text-sm text-gray-600 w-12 text-center">
             {Math.round(scale * 100)}%
           </span>
@@ -306,6 +318,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
             onClick={handleZoomIn}
             className="p-1.5 hover:bg-gray-100 rounded"
             title="Vergrößern"
+            disabled={scale >= 2.0}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
