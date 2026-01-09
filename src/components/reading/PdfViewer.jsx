@@ -3,7 +3,11 @@ import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from
 import * as pdfjsLib from 'pdfjs-dist'
 import { loadPdf } from '../../utils/storage'
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// Use local worker file instead of CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString()
 
 export default function PdfViewer({ file, filePath, directoryHandle, onTextExtracted }) {
   const canvasRef = useRef(null)
@@ -12,7 +16,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
   const [pdf, setPdf] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
-  const [scale, setScale] = useState(1.2)
+  const [scale, setScale] = useState(1.8)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -101,20 +105,32 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
       const canvas = canvasRef.current
       const context = canvas.getContext('2d')
       
-      canvas.height = viewport.height
-      canvas.width = viewport.width
+      // Use devicePixelRatio for sharper rendering
+      const outputScale = window.devicePixelRatio || 1
+      
+      canvas.width = Math.floor(viewport.width * outputScale)
+      canvas.height = Math.floor(viewport.height * outputScale)
+      
+      // Set CSS size to match viewport (prevents browser scaling)
+      canvas.style.width = Math.floor(viewport.width) + 'px'
+      canvas.style.height = Math.floor(viewport.height) + 'px'
+      
+      const transform = outputScale !== 1 
+        ? [outputScale, 0, 0, outputScale, 0, 0] 
+        : null
       
       await page.render({
         canvasContext: context,
-        viewport
+        viewport,
+        transform
       }).promise
     }
     
     renderPage()
   }, [pdf, currentPage, scale])
 
-  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 3))
-  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5))
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.3, 4))
+  const handleZoomOut = () => setScale(prev => Math.max(prev - 0.3, 0.5))
   const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1))
   const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages))
 
