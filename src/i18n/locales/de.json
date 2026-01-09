@@ -56,6 +56,8 @@
     "pdfError": "PDF konnte nicht geladen werden",
     "aiAnalyzing": "KI analysiert das Paper...",
     "aiAnalyzingDesc": "Vorschläge für alle Felder werden generiert. Das kann einen Moment dauern.",
+    "errorMainClaims": "Bitte Hauptaussagen ausfüllen (mind. 50 Zeichen)",
+    "errorTopics": "Bitte mindestens 2 Themen angeben",
     "timer": {
       "start": "Timer starten",
       "pause": "Pause",

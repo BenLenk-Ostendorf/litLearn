@@ -56,6 +56,8 @@
     "pdfError": "PDF could not be loaded",
     "aiAnalyzing": "AI is analyzing the paper...",
     "aiAnalyzingDesc": "Generating suggestions for all fields. This may take a moment.",
+    "errorMainClaims": "Please fill in main claims (min. 50 characters)",
+    "errorTopics": "Please add at least 2 topics",
     "timer": {
       "start": "Start Timer",
       "pause": "Pause",

@@ -118,11 +118,18 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
 
   const adoptSuggestion = (field) => {
     if (field === 'main_claims' || field === 'critical_notes') {
-      const combined = excerpt[field].user_input + '\n\n' + excerpt[field].ai_suggestion
-      handleFieldChange(field, 'final', combined.trim())
+      // Add AI suggestion to user_input with separator
+      const separator = excerpt[field].user_input ? '\n\n' : ''
+      const combined = excerpt[field].user_input + separator + excerpt[field].ai_suggestion
+      handleFieldChange(field, 'user_input', combined.trim())
+      // Clear the suggestion (closes the window)
+      handleFieldChange(field, 'ai_suggestion', '')
     } else {
+      // For arrays (topics): merge unique values into user_input
       const combined = [...new Set([...excerpt[field].user_input, ...excerpt[field].ai_suggestion])]
-      handleFieldChange(field, 'final', combined)
+      handleFieldChange(field, 'user_input', combined)
+      // Clear the suggestion
+      handleFieldChange(field, 'ai_suggestion', [])
     }
   }
 
@@ -143,11 +150,6 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         <textarea
           value={excerpt.main_claims.user_input}
           onChange={(e) => handleFieldChange('main_claims', 'user_input', e.target.value)}
-          onBlur={() => {
-            if (!excerpt.main_claims.final) {
-              handleFieldChange('main_claims', 'final', excerpt.main_claims.user_input)
-            }
-          }}
           placeholder={t('excerpt.mainClaimsPlaceholder')}
           className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary"
         />
@@ -174,17 +176,6 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           onAdopt={() => adoptSuggestion('main_claims')}
           onDismiss={() => handleFieldChange('main_claims', 'ai_suggestion', '')}
         />
-        
-        {excerpt.main_claims.ai_suggestion && (
-          <div className="mt-3">
-            <label className="block text-xs font-medium text-gray-600 mb-1">{t('excerpt.finalVersion')}</label>
-            <textarea
-              value={excerpt.main_claims.final}
-              onChange={(e) => handleFieldChange('main_claims', 'final', e.target.value)}
-              className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-            />
-          </div>
-        )}
       </div>
 
       {/* Citability */}
@@ -227,12 +218,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         </label>
         <TagInput
           tags={excerpt.topics.user_input}
-          onChange={(tags) => {
-            handleFieldChange('topics', 'user_input', tags)
-            if (excerpt.topics.final.length === 0) {
-              handleFieldChange('topics', 'final', tags)
-            }
-          }}
+          onChange={(tags) => handleFieldChange('topics', 'user_input', tags)}
           placeholder={t('excerpt.topicsPlaceholder')}
         />
         <div className="flex justify-end mt-2">
@@ -266,9 +252,12 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
                 <button
                   key={tag}
                   onClick={() => {
-                    if (!excerpt.topics.final.includes(tag)) {
-                      handleFieldChange('topics', 'final', [...excerpt.topics.final, tag])
+                    // Add tag to user_input if not already there
+                    if (!excerpt.topics.user_input.includes(tag)) {
+                      handleFieldChange('topics', 'user_input', [...excerpt.topics.user_input, tag])
                     }
+                    // Remove from suggestions
+                    handleFieldChange('topics', 'ai_suggestion', excerpt.topics.ai_suggestion.filter(t => t !== tag))
                   }}
                   className="px-2 py-1 bg-white rounded text-sm hover:bg-purple-100 transition-colors"
                 >
@@ -276,16 +265,6 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
                 </button>
               ))}
             </div>
-          </div>
-        )}
-        
-        {excerpt.topics.final.length > 0 && (
-          <div className="mt-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">{t('excerpt.finalTags')}</label>
-            <TagInput
-              tags={excerpt.topics.final}
-              onChange={(tags) => handleFieldChange('topics', 'final', tags)}
-            />
           </div>
         )}
       </div>

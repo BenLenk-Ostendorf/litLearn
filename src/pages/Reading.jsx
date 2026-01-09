@@ -90,8 +90,8 @@ export default function Reading() {
   }, [paper, directoryHandle, excerpt, timeSpent])
 
   const createEmptyExcerpt = () => ({
-    main_claims: { user_input: '', ai_suggestion: '', final: '' },
-    topics: { user_input: [], ai_suggestion: [], final: [] },
+    main_claims: { user_input: '', ai_suggestion: '' },
+    topics: { user_input: [], ai_suggestion: [] },
     study_type: '',
     citability: 5,
     citability_reasoning: '',
@@ -99,7 +99,7 @@ export default function Reading() {
     project_reasoning: '',
     expiry_years: 5,
     methodology_sample: '',
-    critical_notes: { user_input: '', ai_suggestion: '', final: '' },
+    critical_notes: { user_input: '', ai_suggestion: '' },
     completed_date: null,
     time_spent_minutes: 0
   })
@@ -208,13 +208,13 @@ export default function Reading() {
   const handleComplete = async () => {
     if (!paper || !excerpt) return
     
-    // Validate required fields
-    if (!excerpt.main_claims.final || excerpt.main_claims.final.length < 50) {
-      setError('Bitte Hauptaussagen ausfüllen (mind. 50 Zeichen)')
+    // Validate required fields (now using user_input since final fields are removed)
+    if (!excerpt.main_claims.user_input || excerpt.main_claims.user_input.length < 50) {
+      setError(t('reading.errorMainClaims'))
       return
     }
-    if (excerpt.topics.final.length < 2) {
-      setError('Bitte mindestens 2 Themen angeben')
+    if (excerpt.topics.user_input.length < 2) {
+      setError(t('reading.errorTopics'))
       return
     }
     
