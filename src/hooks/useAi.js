@@ -51,42 +51,44 @@ Sei konstruktiv-kritisch, nicht destruktiv. Antworte in 2-4 Sätzen.
 `.trim(),
 
   full_analysis: ({ paper_title, doi, pdf_text, projects, project_descriptions }) => `
-Du bist ein wissenschaftlicher Assistent für einen Forscher im Bereich Educational Technology / KI in der Hochschullehre.
+You are a scientific assistant for a researcher in Educational Technology / AI in Higher Education.
 
-Paper zur Analyse:
-Titel: ${paper_title}
+IMPORTANT: Always respond in ENGLISH, regardless of the paper's language. Even if the paper is in German or another language, all your outputs (main_claims, topics, critical_notes, reasoning) must be in English.
+
+Paper to analyze:
+Title: ${paper_title}
 DOI: ${doi}
 
-Extrahierter Text:
+Extracted text:
 ${pdf_text}
 
-Der Forscher arbeitet an folgenden Projekten:
+The researcher works on the following projects:
 ${project_descriptions}
 
-Analysiere das Paper und antworte im folgenden JSON-Format (NUR JSON, keine Erklärung):
+Analyze the paper and respond in the following JSON format (ONLY JSON, no explanation):
 {
-  "main_claims": "2-4 Sätze mit den zentralen Aussagen und Erkenntnissen des Papers. Sachlich und zitierbar formuliert.",
+  "main_claims": "2-4 sentences with the central claims and findings of the paper. Formulated objectively and citable.",
   "topics": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "study_type": "Einer von: Meta-Analyse, RCT, Quasi-Experimentell, Beobachtungsstudie, Qualitativ, Mixed Methods, Review, Theoretisch, Andere",
+  "study_type": "One of: Meta-Analysis, RCT, Quasi-Experimental, Observational Study, Qualitative, Mixed Methods, Review, Theoretical, Other",
   "citability": 5,
-  "citability_reasoning": "Kurze Begründung für die Zitierbarkeit (1-2 Sätze)",
-  "relevant_projects": ["Projektname1"],
-  "project_reasoning": "Kurze Begründung für die Projektzuordnung",
-  "critical_notes": "2-3 Sätze mit konstruktiv-kritischen Anmerkungen zu Methodik, Limitationen oder alternativen Interpretationen."
+  "citability_reasoning": "Brief reasoning for the citability score (1-2 sentences)",
+  "relevant_projects": ["ProjectName1"],
+  "project_reasoning": "Brief reasoning for the project assignment",
+  "critical_notes": "2-3 sentences with constructive-critical notes on methodology, limitations, or alternative interpretations."
 }
 
-Bewertungskriterien für Zitierbarkeit (1-10):
-- 1-2 (Müll): Schwere methodische Mängel, nicht peer-reviewed, fragwürdige Quellen
-- 3-4 (Schwach): Deutliche Limitationen, geringe Stichprobe, schwache Methodik
-- 5-6 (Okay): Solide Arbeit mit einigen Einschränkungen, durchschnittliche Qualität
-- 7-8 (Gut): Hochwertige Studie, gute Methodik, relevante Erkenntnisse
-- 9-10 (Engel): Exzellente Studie, starke Methodik, hohe Relevanz für das Forschungsfeld
+Citability criteria (1-10):
+- 1-2 (Trash): Severe methodological flaws, not peer-reviewed, questionable sources
+- 3-4 (Weak): Significant limitations, small sample size, weak methodology
+- 5-6 (Okay): Solid work with some limitations, average quality
+- 7-8 (Good): High-quality study, good methodology, relevant findings
+- 9-10 (Angel): Excellent study, strong methodology, high relevance for the research field
 
-Berücksichtige bei der Zitierbarkeit:
-1. Methodische Qualität der Studie
-2. Relevanz für Educational Technology / KI in der Hochschullehre
+Consider for citability:
+1. Methodological quality of the study
+2. Relevance for Educational Technology / AI in Higher Education
 
-Verfügbare Projekte für relevant_projects: ${projects.join(', ')}
+Available projects for relevant_projects: ${projects.join(', ')}
 `.trim()
 }
 
