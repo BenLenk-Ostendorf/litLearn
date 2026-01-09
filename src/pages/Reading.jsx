@@ -26,6 +26,7 @@ export default function Reading() {
   
   const containerRef = useRef(null)
   const isDragging = useRef(false)
+  const [dragOver, setDragOver] = useState(false)
 
   // Find paper or get next from inbox
   useEffect(() => {
@@ -89,6 +90,12 @@ export default function Reading() {
     const file = e.target.files?.[0]
     if (!file || !paper) return
     
+    await processPdfFile(file)
+  }
+
+  const processPdfFile = async (file) => {
+    if (!file || !paper) return
+    
     try {
       // Save PDF to pdfs folder
       const fileName = `${paper.doi.replace(/[/\\:]/g, '-')}.pdf`
@@ -100,6 +107,34 @@ export default function Reading() {
       setPdfFile(file)
     } catch (err) {
       setError('PDF-Upload fehlgeschlagen: ' + err.message)
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+  }
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      if (file.type === 'application/pdf') {
+        await processPdfFile(file)
+      } else {
+        setError('Bitte nur PDF-Dateien hochladen')
+      }
     }
   }
 
@@ -218,17 +253,29 @@ export default function Reading() {
             {paper.doi}
           </a>
           
-          <label className="block border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-blue-50/50 transition-colors">
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+              dragOver 
+                ? 'border-primary bg-blue-50 border-solid' 
+                : 'border-gray-300 hover:border-primary hover:bg-blue-50/50'
+            }`}
+          >
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">PDF hochladen um zu starten</p>
+            <p className="text-gray-600 mb-2">PDF hierher ziehen oder klicken zum Hochladen</p>
             <p className="text-sm text-gray-500">Die PDF wird lokal gespeichert</p>
-            <input 
-              type="file" 
-              accept=".pdf" 
-              onChange={handlePdfUpload}
-              className="hidden" 
-            />
-          </label>
+            <label className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
+              PDF auswählen
+              <input 
+                type="file" 
+                accept=".pdf" 
+                onChange={handlePdfUpload}
+                className="hidden" 
+              />
+            </label>
+          </div>
         </div>
       </div>
     )
