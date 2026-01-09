@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ZoomIn, ZoomOut, Maximize2, Minimize2, Hand, MousePointer } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
 import * as pdfjsViewer from 'pdfjs-dist/web/pdf_viewer'
@@ -12,6 +13,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString()
 
 export default function PdfViewer({ file, filePath, directoryHandle, onTextExtracted }) {
+  const { t } = useTranslation()
   const containerRef = useRef(null)
   const scrollContainerRef = useRef(null)
   const canvasRefs = useRef([])
@@ -272,7 +274,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
       <div className="h-full flex items-center justify-center bg-gray-100">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-gray-500">PDF wird geladen...</p>
+          <p className="text-gray-500">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -296,7 +298,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
           <button
             onClick={handleZoomOut}
             className="p-1.5 hover:bg-gray-100 rounded"
-            title="Verkleinern"
+            title={t('pdf.zoomOut')}
             disabled={scale <= 1.0}
           >
             <ZoomOut className="w-4 h-4" />
@@ -317,7 +319,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
           <button
             onClick={handleZoomIn}
             className="p-1.5 hover:bg-gray-100 rounded"
-            title="Vergrößern"
+            title={t('pdf.zoomIn')}
             disabled={scale >= 2.0}
           >
             <ZoomIn className="w-4 h-4" />
@@ -332,16 +334,16 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
                 ? 'bg-primary text-white' 
                 : 'hover:bg-gray-100 text-gray-600'
             }`}
-            title={selectionMode ? 'Text-Auswahl aktiv' : 'Hand-Werkzeug aktiv'}
+            title={selectionMode ? t('pdf.textSelection') : t('pdf.handTool')}
           >
             {selectionMode ? <MousePointer className="w-4 h-4" /> : <Hand className="w-4 h-4" />}
           </button>
           <span className="text-sm text-gray-600">
-            {totalPages} Seiten
+            {t('pdf.pages', { count: totalPages })}
           </span>
           {hasSelectableText === false && (
             <span className="text-sm text-gray-500">
-              (kein Text im PDF)
+              {t('pdf.noText')}
             </span>
           )}
         </div>

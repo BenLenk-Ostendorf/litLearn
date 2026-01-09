@@ -51,11 +51,11 @@
     "title": "Reading",
     "noPaper": "No paper selected",
     "selectFromInbox": "Please select a paper from the inbox",
-    "uploadPdf": "Upload PDF",
+    "uploadPdf": "Select PDF",
     "dragPdf": "Drag PDF here or click to upload",
     "pdfError": "PDF could not be loaded",
     "timer": {
-      "start": "Start",
+      "start": "Start Timer",
       "pause": "Pause",
       "timeSpent": "Time spent"
     },

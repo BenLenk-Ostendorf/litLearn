@@ -1,32 +1,34 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronUp, Sparkles, Check, Loader2 } from 'lucide-react'
 import TagInput from './TagInput'
 import AiSuggestion from './AiSuggestion'
 import { useAi } from '../../hooks/useAi'
 
-const CITABILITY_LABELS = {
-  1: 'Müll', 2: 'Müll',
-  3: 'Schwach', 4: 'Schwach',
-  5: 'Okay', 6: 'Okay',
-  7: 'Gut', 8: 'Gut',
-  9: 'Engel', 10: 'Engel'
-}
-
-const STUDY_TYPES = [
-  'Meta-Analyse',
-  'RCT',
-  'Quasi-Experimentell',
-  'Beobachtungsstudie',
-  'Qualitativ',
-  'Mixed Methods',
-  'Review',
-  'Theoretisch',
-  'Andere'
-]
-
 export default function ExcerptForm({ excerpt, onChange, pdfText, paper, settings, onComplete, saving }) {
+  const { t } = useTranslation()
   const [showOptional, setShowOptional] = useState(false)
   const { requestSuggestions, loading: aiLoading, error: aiError } = useAi(settings)
+  
+  const CITABILITY_LABELS = {
+    1: t('excerpt.citabilityLabels.1'), 2: t('excerpt.citabilityLabels.2'),
+    3: t('excerpt.citabilityLabels.3'), 4: t('excerpt.citabilityLabels.4'),
+    5: t('excerpt.citabilityLabels.5'), 6: t('excerpt.citabilityLabels.6'),
+    7: t('excerpt.citabilityLabels.7'), 8: t('excerpt.citabilityLabels.8'),
+    9: t('excerpt.citabilityLabels.9'), 10: t('excerpt.citabilityLabels.10')
+  }
+
+  const STUDY_TYPES = [
+    t('excerpt.studyTypes.metaAnalysis'),
+    t('excerpt.studyTypes.rct'),
+    t('excerpt.studyTypes.quasiExperimental'),
+    t('excerpt.studyTypes.observational'),
+    t('excerpt.studyTypes.qualitative'),
+    t('excerpt.studyTypes.mixedMethods'),
+    t('excerpt.studyTypes.review'),
+    t('excerpt.studyTypes.theoretical'),
+    t('excerpt.studyTypes.other')
+  ]
   
   const [pendingSuggestions, setPendingSuggestions] = useState({
     main_claims: false,
@@ -136,7 +138,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
       {/* Main Claims */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Hauptaussagen <span className="text-error">*</span>
+          {t('excerpt.mainClaimsRequired')} <span className="text-error">*</span>
         </label>
         <textarea
           value={excerpt.main_claims.user_input}
@@ -146,12 +148,12 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
               handleFieldChange('main_claims', 'final', excerpt.main_claims.user_input)
             }
           }}
-          placeholder="Was sind die zentralen Aussagen des Papers? (mind. 50 Zeichen)"
+          placeholder={t('excerpt.mainClaimsPlaceholder')}
           className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary"
         />
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-gray-500">
-            {excerpt.main_claims.user_input.length} / 50 Zeichen
+            {excerpt.main_claims.user_input.length} / 50 {t('excerpt.characters')}
           </span>
           <button
             onClick={() => requestAiSuggestion('main_claims')}
@@ -163,7 +165,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            KI-Vorschlag
+            {t('excerpt.aiSuggestion')}
           </button>
         </div>
         
@@ -174,7 +176,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         
         {excerpt.main_claims.ai_suggestion && (
           <div className="mt-3">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Finale Version</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('excerpt.finalVersion')}</label>
             <textarea
               value={excerpt.main_claims.final}
               onChange={(e) => handleFieldChange('main_claims', 'final', e.target.value)}
@@ -187,7 +189,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
       {/* Citability */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Zitierbarkeit: {excerpt.citability} ({CITABILITY_LABELS[excerpt.citability]})
+          {t('excerpt.citability')}: {excerpt.citability} ({CITABILITY_LABELS[excerpt.citability]})
         </label>
         <input
           type="range"
@@ -198,15 +200,15 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           className="w-full"
         />
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>1 - Müll</span>
-          <span>10 - Engel</span>
+          <span>1 - {t('excerpt.citabilityLabels.1')}</span>
+          <span>10 - {t('excerpt.citabilityLabels.10')}</span>
         </div>
       </div>
 
       {/* Topics & Key Concepts Combined */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Themen & Konzepte <span className="text-error">*</span>
+          {t('excerpt.topicsAndConceptsRequired')} <span className="text-error">*</span>
         </label>
         <TagInput
           tags={excerpt.topics.user_input}
@@ -216,7 +218,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
               handleFieldChange('topics', 'final', tags)
             }
           }}
-          placeholder="Thema oder Konzept eingeben und Enter drücken..."
+          placeholder={t('excerpt.topicsPlaceholder')}
         />
         <div className="flex justify-end mt-2">
           <button
@@ -229,7 +231,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
             ) : (
               <Sparkles className="w-4 h-4" />
             )}
-            KI-Vorschläge
+            {t('excerpt.aiSuggestions')}
           </button>
         </div>
         
@@ -255,7 +257,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         
         {excerpt.topics.final.length > 0 && (
           <div className="mt-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Finale Tags</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('excerpt.finalTags')}</label>
             <TagInput
               tags={excerpt.topics.final}
               onChange={(tags) => handleFieldChange('topics', 'final', tags)}
@@ -267,14 +269,14 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
       {/* Study Type */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Studientyp
+          {t('excerpt.studyType')}
         </label>
         <select
           value={excerpt.study_type || ''}
           onChange={(e) => handleSimpleChange('study_type', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
         >
-          <option value="">Bitte wählen...</option>
+          <option value="">{t('excerpt.studyTypePlaceholder')}</option>
           {STUDY_TYPES.map(type => (
             <option key={type} value={type}>{type}</option>
           ))}
@@ -284,7 +286,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
       {/* Projects */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Relevante Projekte
+          {t('excerpt.relevantProjects')}
         </label>
         <div className="flex flex-wrap gap-2">
           {settings.projects.map(project => (
@@ -318,7 +320,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
       {/* Expiry */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Relevanz-Dauer
+          {t('excerpt.relevanceDuration')}
         </label>
         <div className="flex flex-wrap gap-2">
           {settings.expiry_options.map(years => (
@@ -337,7 +339,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
                 onChange={() => handleSimpleChange('expiry_years', years)}
                 className="sr-only"
               />
-              {years === 999 ? 'Immer' : `${years} Jahr${years > 1 ? 'e' : ''}`}
+              {years === 999 ? t('excerpt.always') : t('excerpt.years', { count: years })}
             </label>
           ))}
         </div>
@@ -349,7 +351,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
       >
         {showOptional ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        Optionale Felder {showOptional ? 'ausblenden' : 'anzeigen'}
+        {t('excerpt.optionalFields')} {showOptional ? t('excerpt.hide') : t('excerpt.show')}
       </button>
 
       {showOptional && (
@@ -357,12 +359,12 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           {/* Sample Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Samplebeschreibung
+              {t('excerpt.sampleDescription')}
             </label>
             <textarea
               value={excerpt.methodology_sample}
               onChange={(e) => handleSimpleChange('methodology_sample', e.target.value)}
-              placeholder="Beschreibe das Sample und die Methodik..."
+              placeholder={t('excerpt.samplePlaceholder')}
               className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -370,7 +372,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           {/* Critical Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kritische Anmerkungen
+              {t('excerpt.criticalNotes')}
             </label>
             <textarea
               value={excerpt.critical_notes?.user_input || ''}
@@ -381,7 +383,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
                   handleFieldChange('critical_notes', 'final', value)
                 }
               }}
-              placeholder="Deine kritischen Gedanken zum Paper..."
+              placeholder={t('excerpt.criticalNotesPlaceholder')}
               className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
             <div className="flex justify-end mt-2">
@@ -395,7 +397,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
                 ) : (
                   <Sparkles className="w-4 h-4" />
                 )}
-                KI-Perspektiven
+                {t('excerpt.aiPerspectives')}
               </button>
             </div>
             
@@ -417,12 +419,12 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           {saving ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Speichere...
+              {t('excerpt.saving')}
             </>
           ) : (
             <>
               <Check className="w-5 h-5" />
-              Fertig - Paper abschließen
+              {t('excerpt.complete')}
             </>
           )}
         </button>

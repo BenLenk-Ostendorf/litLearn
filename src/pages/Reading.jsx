@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useData } from '../context/DataContext'
 import PdfViewer from '../components/reading/PdfViewer'
@@ -10,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { format, addWeeks } from 'date-fns'
 
 export default function Reading() {
+  const { t } = useTranslation()
   const { paperId } = useParams()
   const navigate = useNavigate()
   const { papers, updatePaper, settings, directoryHandle } = useData()
@@ -264,10 +266,10 @@ export default function Reading() {
             }`}
           >
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">PDF hierher ziehen oder klicken zum Hochladen</p>
-            <p className="text-sm text-gray-500">Die PDF wird lokal gespeichert</p>
+            <p className="text-gray-600 mb-2">{t('reading.dragPdf')}</p>
+            <p className="text-sm text-gray-500">{t('reading.uploadPdf')}</p>
             <label className="mt-4 inline-block px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
-              PDF auswählen
+              {t('reading.uploadPdf')}
               <input 
                 type="file" 
                 accept=".pdf" 
@@ -311,14 +313,14 @@ export default function Reading() {
               className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               <Play className="w-4 h-4" />
-              Timer starten
+              {t('reading.timer.start')}
             </button>
           ) : (
             <button
               onClick={() => setTimerRunning(false)}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             >
-              Pause
+              {t('reading.timer.pause')}
             </button>
           )}
         </div>

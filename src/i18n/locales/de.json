@@ -51,11 +51,11 @@
     "title": "Lesen",
     "noPaper": "Kein Paper ausgewählt",
     "selectFromInbox": "Bitte wähle ein Paper aus der Inbox",
-    "uploadPdf": "PDF hochladen",
+    "uploadPdf": "PDF auswählen",
     "dragPdf": "PDF hierher ziehen oder klicken zum Hochladen",
     "pdfError": "PDF konnte nicht geladen werden",
     "timer": {
-      "start": "Start",
+      "start": "Timer starten",
       "pause": "Pause",
       "timeSpent": "Zeit verbracht"
     },
