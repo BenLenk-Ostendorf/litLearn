@@ -214,7 +214,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
     }
   }, [renderedPages, hasSelectableText])
 
-  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.1, 2.0))
+  const handleZoomIn = () => setScale(prev => Math.min(prev + 0.1, 2.5))
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.1, 1.0))
   const handleZoomChange = (e) => setScale(parseFloat(e.target.value))
   
@@ -306,7 +306,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
           <input
             type="range"
             min="1.0"
-            max="2.0"
+            max="2.5"
             step="0.1"
             value={scale}
             onChange={handleZoomChange}
@@ -320,7 +320,7 @@ export default function PdfViewer({ file, filePath, directoryHandle, onTextExtra
             onClick={handleZoomIn}
             className="p-1.5 hover:bg-gray-100 rounded"
             title={t('pdf.zoomIn')}
-            disabled={scale >= 2.0}
+            disabled={scale >= 2.5}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
