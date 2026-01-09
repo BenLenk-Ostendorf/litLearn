@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
 
 const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' }
+  { code: 'en', name: 'English', displayCode: 'EN', color: 'bg-blue-500' },
+  { code: 'de', name: 'Deutsch', displayCode: 'DE', color: 'bg-red-500' }
 ]
 
 export default function LanguageSwitcher() {
@@ -36,8 +36,13 @@ export default function LanguageSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
         aria-label="Change language"
+        title={currentLanguage.name}
       >
-        <span className="text-2xl">{currentLanguage.flag}</span>
+        <div className="flex items-center gap-2">
+          <div className={`w-6 h-6 rounded-full ${currentLanguage.color} flex items-center justify-center`}>
+            <span className="text-xs font-bold text-white">{currentLanguage.displayCode}</span>
+          </div>
+        </div>
         <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -51,8 +56,10 @@ export default function LanguageSwitcher() {
                 lang.code === currentLanguage.code ? 'bg-blue-50' : ''
               }`}
             >
-              <span className="text-2xl">{lang.flag}</span>
-              <span className={`text-sm ${lang.code === currentLanguage.code ? 'font-medium text-primary' : 'text-gray-700'}`}>
+              <div className={`w-6 h-6 rounded-full ${lang.color} flex items-center justify-center flex-shrink-0`}>
+                <span className="text-xs font-bold text-white">{lang.displayCode}</span>
+              </div>
+              <span className={`text-sm flex-1 text-left ${lang.code === currentLanguage.code ? 'font-medium text-primary' : 'text-gray-700'}`}>
                 {lang.name}
               </span>
             </button>
