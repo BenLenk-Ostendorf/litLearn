@@ -209,7 +209,14 @@ export default function Reading() {
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">{paper.title}</h2>
-          <p className="text-gray-500 mb-4">{paper.doi}</p>
+          <a 
+            href={`https://doi.org/${paper.doi}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline mb-4 inline-block"
+          >
+            {paper.doi}
+          </a>
           
           <label className="block border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-blue-50/50 transition-colors">
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -233,7 +240,14 @@ export default function Reading() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 truncate">{paper.title}</h2>
-          <p className="text-sm text-gray-500">{paper.doi}</p>
+          <a 
+            href={`https://doi.org/${paper.doi}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline"
+          >
+            {paper.doi}
+          </a>
         </div>
         
         <div className="flex items-center gap-4 ml-4">
