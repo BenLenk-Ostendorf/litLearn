@@ -6,9 +6,19 @@ import PdfViewer from '../components/reading/PdfViewer'
 import ExcerptForm from '../components/reading/ExcerptForm'
 import Timer from '../components/reading/Timer'
 import { saveDraft, loadDraft, deleteDraft, savePdf } from '../utils/storage'
-import { Upload, FileText, Play, AlertCircle } from 'lucide-react'
+import { useAi } from '../hooks/useAi'
+import { Upload, FileText, Play, AlertCircle, Sparkles, Loader2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { format, addWeeks } from 'date-fns'
+
+// Project descriptions for AI context
+const PROJECT_DESCRIPTIONS = `
+1. ExplAIner: A web-based educational application that leverages LLMs to deliver personalized learning experiences in higher education. Implements the AVIVA model for LLM-assisted teaching sessions. Features adaptive learning paths, knowledge challenges, personalized content. For students to reach learning goals with minimal supervision.
+
+2. ELeVaTE: A system implementing a five-phase process for examining, validating, and transforming learning objectives in an LLM-augmented educational landscape. Features LLM-powered learning goal extraction, automated competency classification, and iterative transformation workflows. Helps educators assess which learning objectives are at risk due to AI capabilities.
+
+3. Workshopper: A web-based application to help educators plan and structure teaching units based on learning objectives. Guides instructors through learning goal management, method selection, time allocation, and teaching material creation. Features method recommendation based on pedagogical fit and automated material generation.
+`
 
 export default function Reading() {
   const { t } = useTranslation()
@@ -25,6 +35,10 @@ export default function Reading() {
   const [splitPosition, setSplitPosition] = useState(50)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState(null)
+  
+  const { requestFullAnalysis, loading: aiLoading, error: aiError } = useAi(settings)
   
   const containerRef = useRef(null)
   const isDragging = useRef(false)
@@ -80,13 +94,52 @@ export default function Reading() {
     topics: { user_input: [], ai_suggestion: [], final: [] },
     study_type: '',
     citability: 5,
+    citability_reasoning: '',
     relevant_projects: [],
+    project_reasoning: '',
     expiry_years: 5,
     methodology_sample: '',
     critical_notes: { user_input: '', ai_suggestion: '', final: '' },
     completed_date: null,
     time_spent_minutes: 0
   })
+
+  // Trigger AI analysis when PDF text is extracted
+  const runAiAnalysis = useCallback(async (text) => {
+    if (!text || !paper || !settings.api_key) return
+    
+    setAnalyzing(true)
+    
+    try {
+      const analysis = await requestFullAnalysis({
+        paper_title: paper.title,
+        doi: paper.doi,
+        pdf_text: text,
+        projects: settings.projects || ['ExplAIner', 'ELeVaTE', 'Workshopper'],
+        project_descriptions: PROJECT_DESCRIPTIONS
+      })
+      
+      if (analysis) {
+        setAiSuggestions(analysis)
+        // Pre-fill excerpt with AI suggestions
+        setExcerpt(prev => ({
+          ...prev,
+          main_claims: { ...prev.main_claims, ai_suggestion: analysis.main_claims },
+          topics: { ...prev.topics, ai_suggestion: analysis.topics },
+          study_type: analysis.study_type || prev.study_type,
+          citability: analysis.citability || prev.citability,
+          citability_reasoning: analysis.citability_reasoning || '',
+          relevant_projects: analysis.relevant_projects || [],
+          project_reasoning: analysis.project_reasoning || '',
+          critical_notes: { ...prev.critical_notes, ai_suggestion: analysis.critical_notes }
+        }))
+      }
+    } catch (err) {
+      console.error('AI analysis failed:', err)
+    } finally {
+      setAnalyzing(false)
+    }
+  }, [paper, settings, requestFullAnalysis])
 
   const handlePdfUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -142,7 +195,11 @@ export default function Reading() {
 
   const handlePdfTextExtracted = useCallback((text) => {
     setPdfText(text)
-  }, [])
+    // Trigger AI analysis when text is extracted
+    if (text && !aiSuggestions) {
+      runAiAnalysis(text)
+    }
+  }, [aiSuggestions, runAiAnalysis])
 
   const handleExcerptChange = useCallback((updates) => {
     setExcerpt(prev => ({ ...prev, ...updates }))
@@ -331,6 +388,17 @@ export default function Reading() {
           <AlertCircle className="w-5 h-5 text-error flex-shrink-0" />
           <p className="text-error text-sm">{error}</p>
           <button onClick={() => setError(null)} className="ml-auto text-error/60 hover:text-error">×</button>
+        </div>
+      )}
+
+      {/* AI Analysis Loading Overlay */}
+      {analyzing && (
+        <div className="mb-4 bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center gap-3">
+          <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+          <div>
+            <p className="font-medium text-purple-900">{t('reading.aiAnalyzing')}</p>
+            <p className="text-sm text-purple-700">{t('reading.aiAnalyzingDesc')}</p>
+          </div>
         </div>
       )}
 

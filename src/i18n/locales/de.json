@@ -54,6 +54,8 @@
     "uploadPdf": "PDF auswählen",
     "dragPdf": "PDF hierher ziehen oder klicken zum Hochladen",
     "pdfError": "PDF konnte nicht geladen werden",
+    "aiAnalyzing": "KI analysiert das Paper...",
+    "aiAnalyzingDesc": "Vorschläge für alle Felder werden generiert. Das kann einen Moment dauern.",
     "timer": {
       "start": "Timer starten",
       "pause": "Pause",
@@ -112,6 +114,8 @@
     "samplePlaceholder": "Beschreibe das Sample und die Methodik...",
     "criticalNotes": "Kritische Anmerkungen",
     "criticalNotesPlaceholder": "Deine kritischen Gedanken zum Paper...",
+    "aiReasoning": "KI-Begründung",
+    "adopt": "Übernehmen",
     "complete": "Fertig - Paper abschließen",
     "saving": "Speichere..."
   },
@@ -186,6 +190,8 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "close": "Schließen",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
     "back": "Zurück",
     "next": "Weiter",
     "previous": "Zurück",

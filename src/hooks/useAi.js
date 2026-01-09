@@ -48,6 +48,45 @@ Der Nutzer hat kritische Anmerkungen gemacht. Ergänze mögliche weitere kritisc
 - Alternative Interpretationen
 
 Sei konstruktiv-kritisch, nicht destruktiv. Antworte in 2-4 Sätzen.
+`.trim(),
+
+  full_analysis: ({ paper_title, doi, pdf_text, projects, project_descriptions }) => `
+Du bist ein wissenschaftlicher Assistent für einen Forscher im Bereich Educational Technology / KI in der Hochschullehre.
+
+Paper zur Analyse:
+Titel: ${paper_title}
+DOI: ${doi}
+
+Extrahierter Text:
+${pdf_text}
+
+Der Forscher arbeitet an folgenden Projekten:
+${project_descriptions}
+
+Analysiere das Paper und antworte im folgenden JSON-Format (NUR JSON, keine Erklärung):
+{
+  "main_claims": "2-4 Sätze mit den zentralen Aussagen und Erkenntnissen des Papers. Sachlich und zitierbar formuliert.",
+  "topics": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "study_type": "Einer von: Meta-Analyse, RCT, Quasi-Experimentell, Beobachtungsstudie, Qualitativ, Mixed Methods, Review, Theoretisch, Andere",
+  "citability": 5,
+  "citability_reasoning": "Kurze Begründung für die Zitierbarkeit (1-2 Sätze)",
+  "relevant_projects": ["Projektname1"],
+  "project_reasoning": "Kurze Begründung für die Projektzuordnung",
+  "critical_notes": "2-3 Sätze mit konstruktiv-kritischen Anmerkungen zu Methodik, Limitationen oder alternativen Interpretationen."
+}
+
+Bewertungskriterien für Zitierbarkeit (1-10):
+- 1-2 (Müll): Schwere methodische Mängel, nicht peer-reviewed, fragwürdige Quellen
+- 3-4 (Schwach): Deutliche Limitationen, geringe Stichprobe, schwache Methodik
+- 5-6 (Okay): Solide Arbeit mit einigen Einschränkungen, durchschnittliche Qualität
+- 7-8 (Gut): Hochwertige Studie, gute Methodik, relevante Erkenntnisse
+- 9-10 (Engel): Exzellente Studie, starke Methodik, hohe Relevanz für das Forschungsfeld
+
+Berücksichtige bei der Zitierbarkeit:
+1. Methodische Qualität der Studie
+2. Relevanz für Educational Technology / KI in der Hochschullehre
+
+Verfügbare Projekte für relevant_projects: ${projects.join(', ')}
 `.trim()
 }
 
@@ -131,5 +170,99 @@ export function useAi(settings) {
     }
   }, [settings])
 
-  return { requestSuggestions, loading, error }
+  const requestFullAnalysis = useCallback(async (context) => {
+    if (!settings.api_key) {
+      setError('Kein API-Key konfiguriert. Bitte in den Einstellungen hinterlegen.')
+      return null
+    }
+
+    const prompt = PROMPTS.full_analysis(context)
+    
+    setLoading(true)
+    setError(null)
+
+    try {
+      let response
+      let resultText
+      
+      if (settings.api_provider === 'openai') {
+        response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.api_key}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 1500,
+            temperature: 0.5
+          })
+        })
+
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.error?.message || 'OpenAI API Fehler')
+        }
+
+        const data = await response.json()
+        resultText = data.choices[0]?.message?.content?.trim() || null
+        
+      } else if (settings.api_provider === 'gemini') {
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${settings.api_key}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              maxOutputTokens: 1500,
+              temperature: 0.5
+            }
+          })
+        })
+
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.error?.message || 'Gemini API Fehler')
+        }
+
+        const data = await response.json()
+        resultText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null
+      } else {
+        throw new Error('Unbekannter API-Provider')
+      }
+
+      // Parse JSON response
+      if (resultText) {
+        // Extract JSON from response (handle markdown code blocks)
+        const jsonMatch = resultText.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0])
+          return {
+            main_claims: parsed.main_claims || '',
+            topics: Array.isArray(parsed.topics) ? parsed.topics : [],
+            study_type: parsed.study_type || '',
+            citability: typeof parsed.citability === 'number' ? parsed.citability : 5,
+            citability_reasoning: parsed.citability_reasoning || '',
+            relevant_projects: Array.isArray(parsed.relevant_projects) ? parsed.relevant_projects : [],
+            project_reasoning: parsed.project_reasoning || '',
+            critical_notes: parsed.critical_notes || ''
+          }
+        }
+      }
+      
+      throw new Error('Konnte KI-Antwort nicht parsen')
+      
+    } catch (err) {
+      console.error('AI full analysis error:', err)
+      setError(err.message)
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }, [settings])
+
+  return { requestSuggestions, requestFullAnalysis, loading, error }
 }

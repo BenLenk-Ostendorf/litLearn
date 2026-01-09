@@ -172,6 +172,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         <AiSuggestion
           suggestion={excerpt.main_claims.ai_suggestion}
           onAdopt={() => adoptSuggestion('main_claims')}
+          onDismiss={() => handleFieldChange('main_claims', 'ai_suggestion', '')}
         />
         
         {excerpt.main_claims.ai_suggestion && (
@@ -203,6 +204,20 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           <span>1 - {t('excerpt.citabilityLabels.1')}</span>
           <span>10 - {t('excerpt.citabilityLabels.10')}</span>
         </div>
+        {excerpt.citability_reasoning && (
+          <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-purple-700">{t('excerpt.aiReasoning')}</span>
+              <button
+                onClick={() => handleSimpleChange('citability_reasoning', '')}
+                className="text-purple-400 hover:text-purple-600 text-xs"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-sm text-purple-900 mt-1">{excerpt.citability_reasoning}</p>
+          </div>
+        )}
       </div>
 
       {/* Topics & Key Concepts Combined */}
@@ -237,7 +252,16 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
         
         {excerpt.topics.ai_suggestion.length > 0 && (
           <div className="mt-2 p-3 bg-ai-suggestion rounded-lg border border-ai-border">
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-purple-700">{t('excerpt.aiSuggestions')}</span>
+              <button
+                onClick={() => handleFieldChange('topics', 'ai_suggestion', [])}
+                className="text-purple-400 hover:text-purple-600 text-xs"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1">
               {excerpt.topics.ai_suggestion.map(tag => (
                 <button
                   key={tag}
@@ -315,6 +339,20 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
             </label>
           ))}
         </div>
+        {excerpt.project_reasoning && (
+          <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-purple-700">{t('excerpt.aiReasoning')}</span>
+              <button
+                onClick={() => handleSimpleChange('project_reasoning', '')}
+                className="text-purple-400 hover:text-purple-600 text-xs"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-sm text-purple-900 mt-1">{excerpt.project_reasoning}</p>
+          </div>
+        )}
       </div>
 
       {/* Expiry */}
@@ -404,6 +442,7 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
             <AiSuggestion
               suggestion={excerpt.critical_notes.ai_suggestion}
               onAdopt={() => adoptSuggestion('critical_notes')}
+              onDismiss={() => handleFieldChange('critical_notes', 'ai_suggestion', '')}
             />
           </div>
         </div>

@@ -54,6 +54,8 @@
     "uploadPdf": "Select PDF",
     "dragPdf": "Drag PDF here or click to upload",
     "pdfError": "PDF could not be loaded",
+    "aiAnalyzing": "AI is analyzing the paper...",
+    "aiAnalyzingDesc": "Generating suggestions for all fields. This may take a moment.",
     "timer": {
       "start": "Start Timer",
       "pause": "Pause",
@@ -112,6 +114,8 @@
     "samplePlaceholder": "Describe the sample and methodology...",
     "criticalNotes": "Critical Notes",
     "criticalNotesPlaceholder": "Your critical thoughts on the paper...",
+    "aiReasoning": "AI Reasoning",
+    "adopt": "Adopt",
     "complete": "Complete - Finish Paper",
     "saving": "Saving..."
   },
@@ -186,6 +190,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied!",
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
