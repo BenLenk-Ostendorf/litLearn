@@ -82,6 +82,10 @@ export default function Search() {
             aVal = a.excerpt?.citability || 0
             bVal = b.excerpt?.citability || 0
             break
+          case 'time_spent':
+            aVal = a.excerpt?.time_spent_minutes || 0
+            bVal = b.excerpt?.time_spent_minutes || 0
+            break
           case 'added_date':
           default:
             aVal = a.added_date
@@ -231,6 +235,12 @@ export default function Search() {
                 Zitierb. {sortBy === 'citability' && (sortDir === 'asc' ? '↑' : '↓')}
               </th>
               <th 
+                className="text-left px-4 py-3 text-sm font-medium text-gray-700 w-24 cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleSort('time_spent')}
+              >
+                Zeit {sortBy === 'time_spent' && (sortDir === 'asc' ? '↑' : '↓')}
+              </th>
+              <th 
                 className="text-left px-4 py-3 text-sm font-medium text-gray-700 w-28 cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('added_date')}
               >
@@ -242,7 +252,7 @@ export default function Search() {
           <tbody className="divide-y divide-gray-200">
             {filteredPapers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                   Keine Paper gefunden
                 </td>
               </tr>
@@ -268,6 +278,9 @@ export default function Search() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {paper.excerpt?.citability || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {paper.excerpt?.time_spent_minutes ? `${paper.excerpt.time_spent_minutes} min` : '-'}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {format(parseISO(paper.added_date), 'dd.MM.yy')}

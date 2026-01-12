@@ -7,7 +7,7 @@ const DEFAULT_SETTINGS = {
   api_key: '',
   api_provider: 'openai',
   session_duration_minutes: 60,
-  projects: ['ExplAIner', 'LearningGoalHub', 'ExamLens', 'Workshopper'],
+  projects: ['ExplAIner', 'LearningGoalHub', 'ExamLens', 'Workshopper', 'Communication'],
   expiry_options: [1, 5, 10, 999]
 }
 

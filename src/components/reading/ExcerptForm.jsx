@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronUp, Sparkles, Check, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Sparkles, Check, Loader2, X } from 'lucide-react'
 import TagInput from './TagInput'
 import AiSuggestion from './AiSuggestion'
 import { useAi } from '../../hooks/useAi'
@@ -8,6 +8,7 @@ import { useAi } from '../../hooks/useAi'
 export default function ExcerptForm({ excerpt, onChange, pdfText, paper, settings, onComplete, saving }) {
   const { t } = useTranslation()
   const [showOptional, setShowOptional] = useState(false)
+  const [showCitabilityReasoning, setShowCitabilityReasoning] = useState(false)
   const { requestSuggestions, loading: aiLoading, error: aiError } = useAi(settings)
   
   const CITABILITY_LABELS = {
@@ -142,6 +143,54 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
 
   return (
     <div className="p-6 space-y-6">
+      {/* Citability - Moved to top */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('excerpt.citability')}: {excerpt.citability} ({CITABILITY_LABELS[excerpt.citability]})
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={10}
+          value={excerpt.citability}
+          onChange={(e) => handleSimpleChange('citability', parseInt(e.target.value))}
+          className="w-full"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>1 - {t('excerpt.citabilityLabels.1')}</span>
+          <span>10 - {t('excerpt.citabilityLabels.10')}</span>
+        </div>
+        {excerpt.citability_reasoning && (
+          <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <button
+              onClick={() => setShowCitabilityReasoning(!showCitabilityReasoning)}
+              className="w-full flex items-center justify-between hover:bg-purple-100 rounded p-1 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <span className="text-xs font-medium text-purple-700">{t('excerpt.aiReasoning')}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleSimpleChange('citability_reasoning', '')
+                  }}
+                  className="p-1 text-purple-400 hover:text-purple-600 hover:bg-purple-200 rounded transition-colors"
+                  title="Schließen"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                {showCitabilityReasoning ? <ChevronUp className="w-4 h-4 text-purple-600" /> : <ChevronDown className="w-4 h-4 text-purple-600" />}
+              </div>
+            </button>
+            {showCitabilityReasoning && (
+              <p className="text-sm text-purple-900 mt-2">{excerpt.citability_reasoning}</p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Main Claims */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -176,39 +225,6 @@ export default function ExcerptForm({ excerpt, onChange, pdfText, paper, setting
           onAdopt={() => adoptSuggestion('main_claims')}
           onDismiss={() => handleFieldChange('main_claims', 'ai_suggestion', '')}
         />
-      </div>
-
-      {/* Citability */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {t('excerpt.citability')}: {excerpt.citability} ({CITABILITY_LABELS[excerpt.citability]})
-        </label>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={excerpt.citability}
-          onChange={(e) => handleSimpleChange('citability', parseInt(e.target.value))}
-          className="w-full"
-        />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>1 - {t('excerpt.citabilityLabels.1')}</span>
-          <span>10 - {t('excerpt.citabilityLabels.10')}</span>
-        </div>
-        {excerpt.citability_reasoning && (
-          <div className="mt-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-purple-700">{t('excerpt.aiReasoning')}</span>
-              <button
-                onClick={() => handleSimpleChange('citability_reasoning', '')}
-                className="text-purple-400 hover:text-purple-600 text-xs"
-              >
-                ×
-              </button>
-            </div>
-            <p className="text-sm text-purple-900 mt-1">{excerpt.citability_reasoning}</p>
-          </div>
-        )}
       </div>
 
       {/* Topics & Key Concepts Combined */}

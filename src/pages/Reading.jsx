@@ -18,6 +18,8 @@ const PROJECT_DESCRIPTIONS = `
 2. ELeVaTE: A system implementing a five-phase process for examining, validating, and transforming learning objectives in an LLM-augmented educational landscape. Features LLM-powered learning goal extraction, automated competency classification, and iterative transformation workflows. Helps educators assess which learning objectives are at risk due to AI capabilities.
 
 3. Workshopper: A web-based application to help educators plan and structure teaching units based on learning objectives. Guides instructors through learning goal management, method selection, time allocation, and teaching material creation. Features method recommendation based on pedagogical fit and automated material generation.
+
+4. Communication: Research and publications related to scientific communication, science communication to the public, and communication strategies in educational technology and AI in education contexts. Includes papers on how to effectively communicate research findings, public engagement with science, and dissemination strategies.
 `
 
 export default function Reading() {

@@ -34,6 +34,12 @@ export default function Dashboard() {
     const dueToday = papers.filter(p => {
       if (p.status !== 'completed' || !p.spaced_repetition?.next_review_date) return false
       if (p.spaced_repetition.expired) return false
+      
+      // Only remind for papers with citability >= 7 and at least one project
+      const citability = p.excerpt?.citability || 0
+      const hasProjects = p.excerpt?.relevant_projects?.length > 0
+      if (citability < 7 || !hasProjects) return false
+      
       const reviewDate = parseISO(p.spaced_repetition.next_review_date)
       return isToday(reviewDate) || isPast(reviewDate)
     })
@@ -46,6 +52,12 @@ export default function Dashboard() {
       .filter(p => {
         if (p.status !== 'completed' || !p.spaced_repetition?.next_review_date) return false
         if (p.spaced_repetition.expired) return false
+        
+        // Only remind for papers with citability >= 7 and at least one project
+        const citability = p.excerpt?.citability || 0
+        const hasProjects = p.excerpt?.relevant_projects?.length > 0
+        if (citability < 7 || !hasProjects) return false
+        
         const reviewDate = parseISO(p.spaced_repetition.next_review_date)
         return isToday(reviewDate) || isPast(reviewDate)
       })
@@ -134,7 +146,7 @@ export default function Dashboard() {
               to="/inbox" 
               className="block w-full bg-gray-100 text-gray-900 text-center py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
-              CSV importieren
+              Paper hinzufügen
             </Link>
             
             {stats.inboxCount > 0 && (
